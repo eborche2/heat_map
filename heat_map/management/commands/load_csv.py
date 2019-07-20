@@ -2,7 +2,7 @@ from pathlib import Path
 
 from django.conf import settings
 from django.core.management import BaseCommand
-from heat_map.models import IpvFour, IpvSix
+from heat_map.models import Ipv
 
 import pandas as pd
 
@@ -17,15 +17,18 @@ class Command(BaseCommand):
         file_name = options['filename']
         file_location = Path(settings.BASE_DIR, file_name)
         df = pd.read_csv(file_location, usecols=[7, 8])
-        df = df.drop([0])
+        count = df.groupby(df.columns.tolist(), as_index=False).size()
         ipv = None
-        lats_and_longs = []
         if 'IPv4' in file_name:
-            ipv = IpvFour
+            ipv = 'ipv4'
         if 'IPv6' in file_name:
-            ipv = IpvSix
+            ipv = 'ipv6'
 
-        for index, row in df.iterrows():
-            lats_and_longs.append(ipv(latitude=row[0], longitude=row[1]))
-        ipv.objects.all().delete()
-        ipv.objects.bulk_create(lats_and_longs)
+        for index, row in count.iteritems():
+            Ipv.objects.update_or_create(
+                latitude=index[0],
+                longitude=index[1],
+                defaults= {
+                    ipv: row
+                }
+            )

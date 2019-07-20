@@ -17,13 +17,12 @@ from django.contrib import admin
 from django.urls import path, include
 from rest_framework import routers
 
-from heat_map.rest import IpvFourViewSet, IpvSixViewSet
+from heat_map.rest import IpvViewSet
 from heat_map.view import Index
 
 
 apiRouter = routers.DefaultRouter(trailing_slash=False)
-apiRouter.register(r'ipvfour', IpvFourViewSet, base_name='ipvfour')
-apiRouter.register(r'ipvsix', IpvSixViewSet, base_name='ipvsix')
+apiRouter.register(r'ipv', IpvViewSet, base_name='ipv')
 
 
 urlpatterns = [

@@ -1,36 +1,18 @@
 from rest_framework.viewsets import ModelViewSet
 
-from heat_map.models import IpvSix, IpvFour
-from heat_map.serializer import IpvFourSerializer, IpvSixSerializer
+from heat_map.models import Ipv
+from heat_map.serializer import IpvSerializer
 
-
-class IpvSixViewSet(ModelViewSet):
-    serializer_class = IpvSixSerializer
-    entity_name = 'ipvsix'
-
-    def get_queryset(self):
-        bounds = get_query_parameters(self.request)
-        for each in bounds:
-            if not each:
-                return IpvSix.objects.none()
-        return IpvSix.objects.filter(
-            longitude__gte=bounds[0],
-            longitude__lte=bounds[1],
-            latitude__gte=bounds[2],
-            latitude__lte=bounds[3]
-        )
-
-
-class IpvFourViewSet(ModelViewSet):
-    serializer_class = IpvFourSerializer
+class IpvViewSet(ModelViewSet):
+    serializer_class = IpvSerializer
     entity_name = 'ipvfour'
 
     def get_queryset(self):
         bounds = get_query_parameters(self.request)
         for each in bounds:
             if not each:
-                return IpvFour.objects.none()
-        cluster = IpvFour.objects.filter(
+                return Ipv.objects.none()
+        cluster = Ipv.objects.filter(
             longitude__gte=float(bounds[0]),
             longitude__lte=float(bounds[1]),
             latitude__gte=float(bounds[2]),

@@ -1,11 +1,11 @@
 from django.db import models
 
 
-class IpvFour(models.Model):
-    latitude = models.DecimalField(max_digits=12, decimal_places=6)
-    longitude = models.DecimalField(max_digits=12, decimal_places=6)
+class Ipv(models.Model):
+    latitude = models.DecimalField(db_index=True, max_digits=12, decimal_places=6)
+    longitude = models.DecimalField(db_index=True, max_digits=12, decimal_places=6)
+    ipv4 = models.IntegerField(blank=True, null=True, default=0)
+    ipv6 = models.IntegerField(blank=True, null=True, default=0)
+    level = models.IntegerField(blank=True, null=True, default=1)
 
 
-class IpvSix(models.Model):
-    latitude = models.DecimalField(max_digits=12, decimal_places=6)
-    longitude = models.DecimalField(max_digits=12, decimal_places=6)
