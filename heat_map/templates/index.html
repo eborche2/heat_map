@@ -1,0 +1,81 @@
+{% load static %}
+<script src="{% static 'leaflet/leaflet.js' %}"></script>
+<script src="{% static 'jquery-3.4.1.min.js' %}"></script>
+<script src="{% static 'heatmap/build/heatmap.min.js' %}"></script>
+<script src="{% static 'leaflet-heatmap.min.js' %}"></script>
+<script src="{% static 'foundation/js/vendor/foundation.min.js' %}"></script>
+
+<link href="{% static 'leaflet/leaflet.css' %}" rel="stylesheet" type="text/css"/>
+<link href="{% static 'heat_map.css' %}" rel="stylesheet" type="text/css"/>
+<link href="{% static 'foundation/css/foundation.min.css' %}" rel="stylesheet" type="text/css"/>
+
+
+<div class="row">
+    <div class="large-6 columns">
+        <div id="mapid"></div>
+    </div>
+</div>
+
+<script>
+    var heatMap = L.map('mapid').setView([35.833219, -78.896564], 13);
+    L.tileLayer('https://api.mapbox.com/styles/v1/mapbox/emerald-v8/tiles/{z}/{x}/{y}?access_token=pk.eyJ1IjoiZWJvcmNoZTIiLCJhIjoiY2p5YXQ0MmluMDIzYTNjcW13b3Fqc3prNSJ9.CoQc10Q9FoAXMQcIrV2cfw', {
+        tileSize: 512,
+        maxZoom: 18,
+        zoomOffset: -1,
+        attribution: '© <a href="https://www.mapbox.com/map-feedback/">Mapbox</a> © <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+        accessToken: 'pk.eyJ1IjoiZWJvcmNoZTIiLCJhIjoiY2p5YXQ0MmluMDIzYTNjcW13b3Fqc3prNSJ9.CoQc10Q9FoAXMQcIrV2cfw'
+    }).addTo(heatMap);
+    var bounds = heatMap.getBounds();
+
+    var upper_lat = bounds.getNorthEast().lat,
+        lower_lat = bounds.getSouthWest().lat,
+        upper_long = bounds.getNorthEast().lng,
+        lower_long = bounds.getSouthWest().lng;
+
+    var cfg = {
+        // radius should be small ONLY if scaleRadius is true (or small radius is intended)
+        // if scaleRadius is false it will be the constant radius used in pixels
+        "radius": 2,
+        "maxOpacity": .8,
+        // scales the radius based on map zoom
+        "scaleRadius": true,
+        // if set to false the heatmap uses the global maximum for colorization
+        // if activated: uses the data maximum within the current map boundaries
+        //   (there will always be a red spot with useLocalExtremas true)
+        "useLocalExtrema": true,
+        // which field name in your data represents the latitude - default "lat"
+        latField: 'latitude',
+        // which field name in your data represents the longitude - default "lng"
+        lngField: 'longitude',
+        // which field name in your data represents the data value - default "value"
+        valueField: 'id'
+    };
+
+    var heatmapLayer = new HeatmapOverlay(cfg);
+    $.ajax({
+        url:"/api/ipvfour",
+        type: "get",
+        data: {
+            upper_lat: upper_lat,
+            lower_lat: lower_lat,
+            lower_long: lower_long,
+            upper_long: upper_long
+
+        },
+        success: function(response) {
+            console.log(response);
+            var mapData = {
+                max: 700,
+                data: response,
+            }
+            heatmapLayer.setData(mapData);
+        },
+        error: function(error) {
+            console.log(error.toString())
+        }
+    })
+
+
+
+
+</script>

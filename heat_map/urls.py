@@ -18,6 +18,8 @@ from django.urls import path, include
 from rest_framework import routers
 
 from heat_map.rest import IpvFourViewSet, IpvSixViewSet
+from heat_map.view import Index
+
 
 apiRouter = routers.DefaultRouter(trailing_slash=False)
 apiRouter.register(r'ipvfour', IpvFourViewSet, base_name='ipvfour')
@@ -27,5 +29,6 @@ apiRouter.register(r'ipvsix', IpvSixViewSet, base_name='ipvsix')
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/', include(apiRouter.urls)),
+    path('', Index.as_view())
 ]
 

@@ -30,12 +30,13 @@ class IpvFourViewSet(ModelViewSet):
         for each in bounds:
             if not each:
                 return IpvFour.objects.none()
-        return IpvFour.objects.filter(
+        cluster = IpvFour.objects.filter(
             longitude__gte=float(bounds[0]),
             longitude__lte=float(bounds[1]),
             latitude__gte=float(bounds[2]),
             latitude__lte=float(bounds[3])
         )
+        return cluster
 
 
 def get_query_parameters(request):
