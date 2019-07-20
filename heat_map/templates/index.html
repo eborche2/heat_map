@@ -16,21 +16,16 @@
     </div>
 </div>
 
-<script>
-    var heatMap = L.map('mapid').setView([35.833219, -78.896564], 13);
-    L.tileLayer('https://api.mapbox.com/styles/v1/mapbox/emerald-v8/tiles/{z}/{x}/{y}?access_token=pk.eyJ1IjoiZWJvcmNoZTIiLCJhIjoiY2p5YXQ0MmluMDIzYTNjcW13b3Fqc3prNSJ9.CoQc10Q9FoAXMQcIrV2cfw', {
+<script type="text/javascript">
+
+    var baseLayer = L.tileLayer('https://api.mapbox.com/styles/v1/mapbox/emerald-v8/tiles/{z}/{x}/{y}?access_token={{ accessToken }}', {
         tileSize: 512,
         maxZoom: 18,
         zoomOffset: -1,
         attribution: '© <a href="https://www.mapbox.com/map-feedback/">Mapbox</a> © <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>',
-        accessToken: 'pk.eyJ1IjoiZWJvcmNoZTIiLCJhIjoiY2p5YXQ0MmluMDIzYTNjcW13b3Fqc3prNSJ9.CoQc10Q9FoAXMQcIrV2cfw'
-    }).addTo(heatMap);
-    var bounds = heatMap.getBounds();
+        accessToken: "{{ accessToken }}"
+    })
 
-    var upper_lat = bounds.getNorthEast().lat,
-        lower_lat = bounds.getSouthWest().lat,
-        upper_long = bounds.getNorthEast().lng,
-        lower_long = bounds.getSouthWest().lng;
 
     var cfg = {
         // radius should be small ONLY if scaleRadius is true (or small radius is intended)
@@ -52,6 +47,20 @@
     };
 
     var heatmapLayer = new HeatmapOverlay(cfg);
+
+    var heatMap = new L.map('mapid', {
+        center : new L.LatLng(35.833219, -78.896564),
+        zoom: 13,
+        layers: [baseLayer, heatmapLayer]
+    })
+
+    var bounds = heatMap.getBounds();
+
+    var upper_lat = bounds.getNorthEast().lat,
+        lower_lat = bounds.getSouthWest().lat,
+        upper_long = bounds.getNorthEast().lng,
+        lower_long = bounds.getSouthWest().lng;
+
     $.ajax({
         url:"/api/ipvfour",
         type: "get",
@@ -74,7 +83,6 @@
             console.log(error.toString())
         }
     })
-
 
 
 
