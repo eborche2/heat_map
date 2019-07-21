@@ -1,26 +1,72 @@
 {% load static %}
-<script src="{% static 'leaflet/leaflet.js' %}"></script>
 <script src="{% static 'jquery-3.4.1.min.js' %}"></script>
+<script src="{% static 'leaflet/leaflet.js' %}"></script>
+<script src="{% static 'foundation/js/vendor/foundation.min.js' %}"></script>
 <script src="{% static 'heatmap/build/heatmap.min.js' %}"></script>
 <script src="{% static 'leaflet-heatmap.min.js' %}"></script>
-<script src="{% static 'foundation/js/vendor/foundation.min.js' %}"></script>
 
+<link href="{% static 'foundation/css/foundation.min.css' %}" rel="stylesheet" type="text/css"/>
 <link href="{% static 'leaflet/leaflet.css' %}" rel="stylesheet" type="text/css"/>
 <link href="{% static 'heat_map.css' %}" rel="stylesheet" type="text/css"/>
-<link href="{% static 'foundation/css/foundation.min.css' %}" rel="stylesheet" type="text/css"/>
 
+<body>
+    <div class="row">
+        <div class="small-2 columns large-offset-1">
+            <div class="switch large radius">
+                <input class="switch-input" id="ipv4" type="checkbox" checked>
+                <label class="switch-paddle" for="ipv4"></label>
+                <label for="ipv4">IPV4 Locations</label>
+            </div>
+        </div>
+        <div class="small-2 columns">
+            <div class="switch large radius">
+                <input class="switch-input" id="ipv6" type="checkbox">
+                <label class="switch-paddle" for="ipv6"></label>
+                <label for="ipv6">IPV6 Locations</label>
+            </div>
+        </div>
+        <div class="small-2 columns">
+            <div class="switch large radius">
+                <input class="switch-input" id="cluster" type="checkbox">
+                <label class="switch-paddle" for="cluster"></label>
+                <label for="cluster">By Cluster (Requires map reload)</label>
+            </div>
+        </div>
+        <div class="small-2 columns">
+            <div class="grid-x grid-margin-x">
+                <div class="cell small-10">
+                    <div class="slider" data-slider data-initial-start=".5" data-step=".01" data-end="2">
+                        <span class="slider-handle"  data-slider-handle role="slider" tabindex="1" aria-controls="radius"></span>
+                        <span class="slider-fill" data-slider-fill></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="small-1 columns">
 
-<div class="row">
-    <div class="large-6 columns">
-        <div id="mapid"></div>
+                <input type="number" id="radius">
+                <label for="radius">Cluster Radius</label>
+
+        </div>
+        <div class="small-1 columns">
+            <button type="button" onclick="changeRadius()" class="button">Update</button>
+        </div>
     </div>
-</div>
+    <div class="row">
+        <div class="large-11 columns">
+            <div id="mapid"></div>
+        </div>
+    </div>
+    <div id="cover-spin"></div>
+</body>
 
 <script type="text/javascript">
-
+    $(document).foundation();
+    $('#cover-spin').show(0)
     var baseLayer = L.tileLayer('https://api.mapbox.com/styles/v1/mapbox/emerald-v8/tiles/{z}/{x}/{y}?access_token={{ accessToken }}', {
         tileSize: 512,
-        maxZoom: 18,
+        maxZoom: 11,
+        minZoom: 5,
         zoomOffset: -1,
         attribution: '© <a href="https://www.mapbox.com/map-feedback/">Mapbox</a> © <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>',
         accessToken: "{{ accessToken }}"
@@ -30,14 +76,14 @@
     var cfg = {
         // radius should be small ONLY if scaleRadius is true (or small radius is intended)
         // if scaleRadius is false it will be the constant radius used in pixels
-        "radius": 2,
+        "radius": .5,
         "maxOpacity": .8,
         // scales the radius based on map zoom
         "scaleRadius": true,
         // if set to false the heatmap uses the global maximum for colorization
         // if activated: uses the data maximum within the current map boundaries
         //   (there will always be a red spot with useLocalExtremas true)
-        "useLocalExtrema": true,
+        "useLocalExtrema": false,
         // which field name in your data represents the latitude - default "lat"
         latField: 'latitude',
         // which field name in your data represents the longitude - default "lng"
@@ -46,44 +92,246 @@
         valueField: 'ipv4'
     };
 
+    if (sessionStorage.getItem('useExtrema') == 't') {
+        cfg['useLocalExtrema'] = true;
+        cfg['radius'] = .1;
+        $('#cluster').prop('checked', true);
+    }
+
     var heatmapLayer = new HeatmapOverlay(cfg);
 
     var heatMap = new L.map('mapid', {
         center : new L.LatLng(35.833219, -78.896564),
-        zoom: 13,
+        zoom: 8,
         layers: [baseLayer, heatmapLayer]
     })
 
-    var bounds = heatMap.getBounds();
+    var ipv4 = true;
+    var ipv4Max = 0;
+    var ipv6 = false;
+    var ipv4_list = [];
+    var ipv6_list = [];
+    var combined_list = [];
+    var current_up_lat = 0;
+    var current_low_lat = 0;
+    var current_up_long = 0;
+    var current_low_long = 0;
 
-    var upper_lat = bounds.getNorthEast().lat,
-        lower_lat = bounds.getSouthWest().lat,
-        upper_long = bounds.getNorthEast().lng,
-        lower_long = bounds.getSouthWest().lng;
+    function setIntialBounds(bounds) {
+        current_up_lat = bounds.getNorthEast().lat;
+        current_low_lat = bounds.getSouthWest().lat;
+        current_up_long = bounds.getNorthEast().lng;
+        current_low_long = bounds.getSouthWest().lng;
+        getIpv([current_up_lat, current_low_lat, current_up_long, current_low_long]);
+        expandBounds();
+    }
 
-    $.ajax({
-        url:"/api/ipvfour",
-        type: "get",
-        data: {
-            upper_lat: upper_lat,
-            lower_lat: lower_lat,
-            lower_long: lower_long,
-            upper_long: upper_long
-
-        },
-        success: function(response) {
-            console.log(response);
-            var mapData = {
-                max: 5,
-                data: response,
+    function expandBounds() {
+        for (dir of ['s', 'e', 'n', 'w']) {
+            var mapBounds = heatMap.getBounds();
+            var newBounds = [];
+            switch(dir) {
+                case 's':
+                    if (mapBounds.getSouthWest().lat > current_low_lat + 3){
+                        break;
+                    }
+                    newBounds.push(current_low_lat);
+                    newBounds.push(current_low_lat - 3);
+                    newBounds.push(current_up_long);
+                    newBounds.push(current_low_long);
+                    current_low_lat = current_low_lat - 3;
+                    break;
+                case 'e':
+                    if (mapBounds.getNorthEast().lng < current_up_long - 5){
+                        break;
+                    }
+                    newBounds.push(current_up_lat);
+                    newBounds.push(current_low_lat);
+                    newBounds.push(current_up_long + 5);
+                    newBounds.push(current_up_long);
+                    current_up_long = current_up_long + 5;
+                    break;
+                case 'n':
+                    if (mapBounds.getNorthEast().lat < current_up_lat - 3){
+                        break;
+                    }
+                    newBounds.push(current_up_lat + 3);
+                    newBounds.push(current_up_lat);
+                    newBounds.push(current_up_long);
+                    newBounds.push(current_low_long);
+                    current_up_lat = current_up_lat + 3;
+                    break;
+                case 'w':
+                    if (mapBounds.getSouthWest().lng > current_low_long + 5){
+                        break;
+                    }
+                    newBounds.push(current_up_lat);
+                    newBounds.push(current_low_lat);
+                    newBounds.push(current_low_long);
+                    newBounds.push(current_low_long - 5);
+                    current_low_long = current_low_long - 5;
+                    break;
+                default:
+                    return;
             }
-            heatmapLayer.setData(mapData);
-        },
-        error: function(error) {
-            console.log(error.toString())
+            if (newBounds.length > 0) {
+                getIpv(newBounds);
+            }
         }
-    })
+        if (!checkBounds()) {
+            expandBounds();
+        }
+    }
 
+    function getIpv(bounds) {
+        var upper_lat = bounds[0],
+        lower_lat = bounds[1],
+        upper_long = bounds[2],
+        lower_long = bounds[3];
+        $('#cover-spin').show(0)
+        $.ajax({
+            url:"/api/ipv",
+            type: "get",
+            data: {
+                upper_lat: upper_lat,
+                lower_lat: lower_lat,
+                lower_long: lower_long,
+                upper_long: upper_long
 
+            },
+            success: function(response) {
+                console.log(response);
+                processResponse(response);
+
+            },
+            error: function(error) {
+                console.log(error.toString())
+            }
+        })
+    }
+
+    function processResponse(response) {
+        var types = ['ipv4', 'ipv6', 'combined']
+        for (var location of response) {
+            for (var type of types) {
+                switch(type) {
+                    case 'ipv4':
+                        if (location[type] > ipv4Max) {
+                            ipv4Max = location[type]
+                        }
+                        checkAndAdd(
+                            {
+                                latitude: location['latitude'],
+                                longitude: location['longitude'],
+                                count: location[type]
+                            },
+                            ipv4_list
+                        )
+                        break;
+                    case 'ipv6':
+                        if (location[type] > 0) {
+                            checkAndAdd(
+                            {
+                                latitude: location['latitude'],
+                                longitude: location['longitude'],
+                                count: location[type]
+                            },
+                            ipv6_list
+                        )
+                        }
+                        break;
+                    case 'combined':
+                        checkAndAdd(
+                            {
+                                latitude: location['latitude'],
+                                longitude: location['longitude'],
+                                count: location['ipv4'] + location['ipv6']
+                            },
+                            combined_list
+                        )
+                        break;
+                    default:
+                        break;
+
+                }
+            }
+        }
+        drawHeat();
+    }
+
+    function checkAndAdd(loc, type_list) {
+        if (type_list.some(e => e.longitude == loc['longitude']) && type_list.some(e => e.latitude == loc['latitude'])) {
+            return
+        } else {
+            type_list.push(loc)
+        }
+    }
+
+    function drawHeat() {
+        var mapData = {
+            min: 1,
+            max: ipv4Max/2,
+            data: ipv4_list
+        }
+        if (ipv4 && ipv6) {
+            mapData['data'] = combined_list
+        } else if (ipv6) {
+            mapData['data'] = ipv6_list
+        } else if(!ipv4 && !ipv6) {
+            mapData['data'] = []
+        }
+        heatmapLayer.setData(mapData);
+        $('#cover-spin').hide();
+    }
+    setIntialBounds(heatMap.getBounds());
+
+    heatMap.on('moveend', function(e) {
+        expandBounds();
+    });
+
+    function checkBounds() {
+        var check = heatMap.getBounds();
+        var up_lat = check.getNorthEast().lat,
+        low_lat = check.getSouthWest().lat,
+        up_long = check.getNorthEast().lng,
+        low_long = check.getSouthWest().lng;
+        return up_lat < current_up_lat -3 && low_lat > current_low_lat - 3 && up_long < current_up_long - 5 && low_long > current_low_long - 5;
+    }
+
+    $('#ipv4').change(
+        function() {
+            if (this.checked) {
+                ipv4 = true;
+            } else {
+                ipv4 = false;
+            }
+            drawHeat();
+        }
+    )
+    $('#ipv6').change(
+        function() {
+            if (this.checked) {
+                ipv6 = true;
+            } else {
+                ipv6 = false;
+            }
+            drawHeat();
+        }
+    )
+    $('#cluster').change(
+        function() {
+            if (this.checked) {
+                sessionStorage.setItem('useExtrema', 't');
+            } else {
+                sessionStorage.setItem('useExtrema', 'n');
+            }
+            location.reload(true);
+        }
+    )
+
+    function changeRadius() {
+        cfg['radius'] = $('#radius').val()
+        heatmapLayer.reconfigure(cfg);
+    }
 
 </script>
