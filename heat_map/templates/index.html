@@ -10,54 +10,59 @@
 <link href="{% static 'heat_map.css' %}" rel="stylesheet" type="text/css"/>
 
 <body>
-    <div class="row">
-        <div class="small-2 columns large-offset-1">
-            <div class="switch large radius">
-                <input class="switch-input" id="ipv4" type="checkbox" checked>
-                <label class="switch-paddle" for="ipv4"></label>
-                <label for="ipv4">IPV4 Locations</label>
+    <fieldset class="fieldset">
+        <legend>Heat Map Controls</legend>
+        <div class="row">
+            <div class="small-2 columns large-offset-1">
+                <div class="switch large radius">
+                    <input class="switch-input" id="ipv4" type="checkbox" checked>
+                    <label class="switch-paddle" for="ipv4"></label>
+                    <label for="ipv4">IPV4 Locations</label>
+                </div>
             </div>
-        </div>
-        <div class="small-2 columns">
-            <div class="switch large radius">
-                <input class="switch-input" id="ipv6" type="checkbox">
-                <label class="switch-paddle" for="ipv6"></label>
-                <label for="ipv6">IPV6 Locations</label>
+            <div class="small-2 columns">
+                <div class="switch large radius">
+                    <input class="switch-input" id="ipv6" type="checkbox">
+                    <label class="switch-paddle" for="ipv6"></label>
+                    <label for="ipv6">IPV6 Locations</label>
+                </div>
             </div>
-        </div>
-        <div class="small-2 columns">
-            <div class="switch large radius">
-                <input class="switch-input" id="cluster" type="checkbox">
-                <label class="switch-paddle" for="cluster"></label>
-                <label for="cluster">By Cluster (Requires map reload)</label>
+            <div class="small-2 columns">
+                <div class="switch large radius">
+                    <input class="switch-input" id="cluster" type="checkbox">
+                    <label class="switch-paddle" for="cluster"></label>
+                    <label for="cluster">By Cluster</label>
+                    <label for="cluster">* Requires Map Reload</label>
+                </div>
             </div>
-        </div>
-        <div class="small-2 columns">
-            <div class="grid-x grid-margin-x">
-                <div class="cell small-10">
-                    <div class="slider" data-slider data-initial-start=".5" data-step=".01" data-end="2">
-                        <span class="slider-handle"  data-slider-handle role="slider" tabindex="1" aria-controls="radius"></span>
-                        <span class="slider-fill" data-slider-fill></span>
+            <div class="small-2 columns">
+                <div class="grid-x grid-margin-x">
+                    <div class="cell small-10">
+                        <div class="slider" data-slider data-initial-start=".5" data-step=".01" data-end="2">
+                            <span class="slider-handle"  data-slider-handle role="slider" tabindex="1" aria-controls="radius"></span>
+                            <span class="slider-fill" data-slider-fill></span>
+                        </div>
                     </div>
                 </div>
             </div>
-        </div>
-        <div class="small-1 columns">
+            <div class="small-1 columns">
 
-                <input type="number" id="radius">
-                <label for="radius">Cluster Radius</label>
+                    <input type="number" id="radius">
+                    <label for="radius">Cluster Radius</label>
 
+            </div>
+            <div class="small-1 columns">
+                <button type="button" onclick="changeRadius()" class="button">Update</button>
+            </div>
         </div>
-        <div class="small-1 columns">
-            <button type="button" onclick="changeRadius()" class="button">Update</button>
-        </div>
-    </div>
+        </fieldset>
     <div class="row">
         <div class="large-11 columns">
             <div id="mapid"></div>
         </div>
     </div>
     <div id="cover-spin"></div>
+    X
 </body>
 
 <script type="text/javascript">
@@ -95,6 +100,8 @@
     if (sessionStorage.getItem('useExtrema') == 't') {
         cfg['useLocalExtrema'] = true;
         cfg['radius'] = .1;
+        $('#radius').val(.1);
+        var mySlider = new Foundation.Slider($(".slider"), {initialStart: 0.1, initialEnd: 2, step: 0.05});
         $('#cluster').prop('checked', true);
     }
 
@@ -111,7 +118,6 @@
     var ipv6 = false;
     var ipv4_list = [];
     var ipv6_list = [];
-    var combined_list = [];
     var current_up_lat = 0;
     var current_low_lat = 0;
     var current_up_long = 0;
@@ -240,16 +246,6 @@
                         )
                         }
                         break;
-                    case 'combined':
-                        checkAndAdd(
-                            {
-                                latitude: location['latitude'],
-                                longitude: location['longitude'],
-                                count: location['ipv4'] + location['ipv6']
-                            },
-                            combined_list
-                        )
-                        break;
                     default:
                         break;
 
@@ -273,9 +269,8 @@
             max: ipv4Max/2,
             data: ipv4_list
         }
-        if (ipv4 && ipv6) {
-            mapData['data'] = combined_list
-        } else if (ipv6) {
+
+        if (ipv6) {
             mapData['data'] = ipv6_list
         } else if(!ipv4 && !ipv6) {
             mapData['data'] = []
@@ -302,6 +297,8 @@
         function() {
             if (this.checked) {
                 ipv4 = true;
+                ipv6 = false;
+                $('#ipv6').prop('checked', false);
             } else {
                 ipv4 = false;
             }
@@ -312,6 +309,8 @@
         function() {
             if (this.checked) {
                 ipv6 = true;
+                ipv4 = false;
+                $("#ipv4").prop('checked', false);
             } else {
                 ipv6 = false;
             }
