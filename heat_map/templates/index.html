@@ -4,79 +4,123 @@
 <script src="{% static 'foundation/js/vendor/foundation.min.js' %}"></script>
 <script src="{% static 'heatmap/build/heatmap.min.js' %}"></script>
 <script src="{% static 'leaflet-heatmap.min.js' %}"></script>
+<script src="{% static 'loading-bar.js' %}"></script>
 
 <link href="{% static 'foundation/css/foundation.min.css' %}" rel="stylesheet" type="text/css"/>
 <link href="{% static 'leaflet/leaflet.css' %}" rel="stylesheet" type="text/css"/>
 <link href="{% static 'heat_map.css' %}" rel="stylesheet" type="text/css"/>
+<link href="{% static 'loading-bar.css' %}" rel="stylesheet" type="text/css"/>
+<link href="{% static 'fontawesome/css/fontawesome.css' %}" rel="stylesheet" type="text/css"/>
+<link href="{% static 'fontawesome/css/brands.css' %}" rel="stylesheet" type="text/css"/>
+<link href="{% static 'fontawesome/css/solid.css' %}" rel="stylesheet" type="text/css"/>
 
 <body>
-    <fieldset class="fieldset">
+
+    <div class="row align-middle">
+        <div class="large-2 columns">
+             <fieldset class="fieldset">
         <legend>Heat Map Controls</legend>
         <div class="row">
-            <div class="small-2 columns large-offset-1">
+            <div class="small-6 columns">
                 <div class="switch large radius">
                     <input class="switch-input" id="ipv4" type="checkbox" checked>
                     <label class="switch-paddle" for="ipv4"></label>
                     <label for="ipv4">IPV4 Locations</label>
                 </div>
             </div>
-            <div class="small-2 columns">
+            <div class="small-6 columns">
                 <div class="switch large radius">
                     <input class="switch-input" id="ipv6" type="checkbox">
                     <label class="switch-paddle" for="ipv6"></label>
                     <label for="ipv6">IPV6 Locations</label>
                 </div>
             </div>
-            <div class="small-2 columns">
+        </div>
+        <div class="row">
+            <div class="small-5 columns">
                 <div class="switch large radius">
                     <input class="switch-input" id="cluster" type="checkbox">
                     <label class="switch-paddle" for="cluster"></label>
                     <label for="cluster">By Cluster</label>
-                    <label for="cluster">* Requires Map Reload</label>
+                </div>
+
+            </div>
+            <div class="small-7 columns">
+                <button type="button" onclick="resetMap()" class="button"><i class="fas fa-redo"></i> Reset Map</button>
+            </div>
+        </div>
+        <hr>
+        <div class="row">
+            <div class="small-12 columns">
+                <div class="slider" data-slider data-initial-start=".5" data-step=".01" data-end="2">
+                    <span class="slider-handle"  data-slider-handle role="slider" tabindex="1" aria-controls="radius"></span>
+                    <span class="slider-fill" data-slider-fill></span>
                 </div>
             </div>
-            <div class="small-2 columns">
-                <div class="grid-x grid-margin-x">
-                    <div class="cell small-10">
-                        <div class="slider" data-slider data-initial-start=".5" data-step=".01" data-end="2">
-                            <span class="slider-handle"  data-slider-handle role="slider" tabindex="1" aria-controls="radius"></span>
-                            <span class="slider-fill" data-slider-fill></span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="small-1 columns">
+        </div>
+
+        <div class="row">
+            <div class="small-12 columns">
 
                     <input type="number" id="radius">
                     <label for="radius">Cluster Radius</label>
 
             </div>
-            <div class="small-1 columns">
-                <button type="button" onclick="changeRadius()" class="button">Update</button>
+            <div class="small-7 columns small-offset-3">
+                <button type="button" id="setRadius" onclick="changeRadius()" class="button"><i class="fas fa-arrow-circle-up"></i> Update</button>
+            </div>
+        </div>
+        <hr>
+        <div class="row">
+            <div class="small-12 columns">
+                <h6>Center on Coordinates</h6>
+                <input type="number" id="latitude">
+                <label for="latitude">Latitude</label>
+                <input type="number" id="longitude">
+                <label for="longitude">Longitude</label>
+            </div>
+            <div class="small-7 columns small-offset-3">
+                <button type="button" id="setCenter" onclick="recenterMap()" class="button"><i class="fas fa-map-marker"></i> Set Center</button>
             </div>
         </div>
         </fieldset>
-    <div class="row">
-        <div class="large-11 columns">
-            <div id="mapid"></div>
+        </div>
+        <div class="large-10 columns">
+            <div class="row align-center">
+                <div class="medium-4 columns">
+                    <h4>Heat Map Loading Progress</h4>
+                    <div class="ldBar label-center" data-preset="line" data-value="10" style="width:100%;height:60px"></div>
+                </div>
+            </div>
+            <div class="row align-center">
+                <div class="large-12 columns">
+                    <div id="mapid"></div>
+                </div>
+            </div>
         </div>
     </div>
-    <div id="cover-spin"></div>
-    X
+    <div id="badCoordinates" class="reveal" data-reveal>
+      <h2 id="modalTitle">Invalid Coordinates</h2>
+      <p class="lead">The coordinates you've entered are invalid.</p>
+      <p>You must enter a latitude between -90 and 90 and a longitude between -180 and 180.</p>
+       <button class="close-button" data-close aria-label="Close reveal" type="button">
+        <span aria-hidden="true">&times;</span>
+      </button>
+    </div>
 </body>
 
 <script type="text/javascript">
     $(document).foundation();
-    $('#cover-spin').show(0)
     var baseLayer = L.tileLayer('https://api.mapbox.com/styles/v1/mapbox/emerald-v8/tiles/{z}/{x}/{y}?access_token={{ accessToken }}', {
         tileSize: 512,
         maxZoom: 11,
-        minZoom: 5,
+        minZoom: 3,
         zoomOffset: -1,
         attribution: '© <a href="https://www.mapbox.com/map-feedback/">Mapbox</a> © <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>',
         accessToken: "{{ accessToken }}"
     })
-
+    $('#mapid').css("height", $(window).height() - 450);
+    console.log($(window).height());
 
     var cfg = {
         // radius should be small ONLY if scaleRadius is true (or small radius is intended)
@@ -105,30 +149,48 @@
         $('#cluster').prop('checked', true);
     }
 
+    var zoom = 8;
+    if (sessionStorage.getItem('zoom') != undefined) {
+        zoom = parseInt(sessionStorage.getItem('zoom'));
+    }
+
     var heatmapLayer = new HeatmapOverlay(cfg);
 
     var heatMap = new L.map('mapid', {
         center : new L.LatLng(35.833219, -78.896564),
-        zoom: 8,
+        zoom: zoom,
+        maxBoundsViscosity: 1.0,
         layers: [baseLayer, heatmapLayer]
     })
 
     var ipv4 = true;
     var ipv4Max = 0;
     var ipv6 = false;
-    var ipv4_list = [];
-    var ipv6_list = [];
-    var current_up_lat = 0;
-    var current_low_lat = 0;
-    var current_up_long = 0;
-    var current_low_long = 0;
+    var ipv4List = [];
+    var ipv6List = [];
+    var currentUpLat = 0;
+    var currentLowLat = 0;
+    var currentUpLong = 0;
+    var currentLowLong = 0;
+    var totalRequest = 0;
+    var maxRequest = 0;
+    var maxNorthEast = L.latLng(90, 180);
+    var maxSouthWest = L.latLng(-90, -180);
+    var maxBounds = L.latLngBounds(maxSouthWest, maxNorthEast);
+    var recenter = false;
+    heatMap.setMaxBounds(maxBounds);
+    heatMap.on('drag', function() {
+        heatMap.panInsideBounds(maxBounds, {animate: false});
+    });
+
+    
 
     function setIntialBounds(bounds) {
-        current_up_lat = bounds.getNorthEast().lat;
-        current_low_lat = bounds.getSouthWest().lat;
-        current_up_long = bounds.getNorthEast().lng;
-        current_low_long = bounds.getSouthWest().lng;
-        getIpv([current_up_lat, current_low_lat, current_up_long, current_low_long]);
+        currentUpLat = bounds.getNorthEast().lat;
+        currentLowLat = bounds.getSouthWest().lat;
+        currentUpLong = bounds.getNorthEast().lng;
+        currentLowLong = bounds.getSouthWest().lng;
+        getIpv([currentUpLat, currentLowLat, currentUpLong, currentLowLong]);
         expandBounds();
     }
 
@@ -138,44 +200,44 @@
             var newBounds = [];
             switch(dir) {
                 case 's':
-                    if (mapBounds.getSouthWest().lat > current_low_lat + 3){
+                    if (mapBounds.getSouthWest().lat > currentLowLat + 2){
                         break;
                     }
-                    newBounds.push(current_low_lat);
-                    newBounds.push(current_low_lat - 3);
-                    newBounds.push(current_up_long);
-                    newBounds.push(current_low_long);
-                    current_low_lat = current_low_lat - 3;
+                    newBounds.push(currentLowLat);
+                    newBounds.push(currentLowLat - 3);
+                    newBounds.push(currentUpLong);
+                    newBounds.push(currentLowLong);
+                    currentLowLat = currentLowLat - 3;
                     break;
                 case 'e':
-                    if (mapBounds.getNorthEast().lng < current_up_long - 5){
+                    if (mapBounds.getNorthEast().lng < currentUpLong - 4){
                         break;
                     }
-                    newBounds.push(current_up_lat);
-                    newBounds.push(current_low_lat);
-                    newBounds.push(current_up_long + 5);
-                    newBounds.push(current_up_long);
-                    current_up_long = current_up_long + 5;
+                    newBounds.push(currentUpLat);
+                    newBounds.push(currentLowLat);
+                    newBounds.push(currentUpLong + 5);
+                    newBounds.push(currentUpLong);
+                    currentUpLong = currentUpLong + 5;
                     break;
                 case 'n':
-                    if (mapBounds.getNorthEast().lat < current_up_lat - 3){
+                    if (mapBounds.getNorthEast().lat < currentUpLat - 2){
                         break;
                     }
-                    newBounds.push(current_up_lat + 3);
-                    newBounds.push(current_up_lat);
-                    newBounds.push(current_up_long);
-                    newBounds.push(current_low_long);
-                    current_up_lat = current_up_lat + 3;
+                    newBounds.push(currentUpLat + 3);
+                    newBounds.push(currentUpLat);
+                    newBounds.push(currentUpLong);
+                    newBounds.push(currentLowLong);
+                    currentUpLat = currentUpLat + 3;
                     break;
                 case 'w':
-                    if (mapBounds.getSouthWest().lng > current_low_long + 5){
+                    if (mapBounds.getSouthWest().lng > currentLowLong + 4){
                         break;
                     }
-                    newBounds.push(current_up_lat);
-                    newBounds.push(current_low_lat);
-                    newBounds.push(current_low_long);
-                    newBounds.push(current_low_long - 5);
-                    current_low_long = current_low_long - 5;
+                    newBounds.push(currentUpLat);
+                    newBounds.push(currentLowLat);
+                    newBounds.push(currentLowLong);
+                    newBounds.push(currentLowLong - 5);
+                    currentLowLong = currentLowLong - 5;
                     break;
                 default:
                     return;
@@ -190,27 +252,33 @@
     }
 
     function getIpv(bounds) {
-        var upper_lat = bounds[0],
-        lower_lat = bounds[1],
-        upper_long = bounds[2],
-        lower_long = bounds[3];
-        $('#cover-spin').show(0)
+        ++totalRequest;
+        if (totalRequest > maxRequest) {
+            maxRequest = totalRequest;
+        }
+        console.log(totalRequest);
+        var upperLat = bounds[0],
+        lowerLat = bounds[1],
+        upperLong = bounds[2],
+        lowerLong = bounds[3];
         $.ajax({
             url:"/api/ipv",
             type: "get",
             data: {
-                upper_lat: upper_lat,
-                lower_lat: lower_lat,
-                lower_long: lower_long,
-                upper_long: upper_long
+                upper_lat: upperLat,
+                lower_lat: lowerLat,
+                lower_long: lowerLong,
+                upper_long: upperLong
 
             },
             success: function(response) {
                 console.log(response);
                 processResponse(response);
+                --totalRequest;
 
             },
             error: function(error) {
+                --totalRequest;
                 console.log(error.toString())
             }
         })
@@ -231,7 +299,7 @@
                                 longitude: location['longitude'],
                                 count: location[type]
                             },
-                            ipv4_list
+                            ipv4List
                         )
                         break;
                     case 'ipv6':
@@ -242,7 +310,7 @@
                                 longitude: location['longitude'],
                                 count: location[type]
                             },
-                            ipv6_list
+                            ipv6List
                         )
                         }
                         break;
@@ -255,11 +323,11 @@
         drawHeat();
     }
 
-    function checkAndAdd(loc, type_list) {
-        if (type_list.some(e => e.longitude == loc['longitude']) && type_list.some(e => e.latitude == loc['latitude'])) {
+    function checkAndAdd(loc, typeList) {
+        if (typeList.some(e => e.longitude == loc['longitude']) && typeList.some(e => e.latitude == loc['latitude'])) {
             return
         } else {
-            type_list.push(loc)
+            typeList.push(loc)
         }
     }
 
@@ -267,30 +335,55 @@
         var mapData = {
             min: 1,
             max: ipv4Max/2,
-            data: ipv4_list
+            data: ipv4List
         }
 
         if (ipv6) {
-            mapData['data'] = ipv6_list
+            mapData['data'] = ipv6List
         } else if(!ipv4 && !ipv6) {
             mapData['data'] = []
         }
         heatmapLayer.setData(mapData);
-        $('#cover-spin').hide();
+        console.log(((maxRequest - totalRequest) / maxRequest) * 100);
+        console.log(maxRequest);
+        console.log(totalRequest);
+        adjustLoading();
     }
-    setIntialBounds(heatMap.getBounds());
+
+    function adjustLoading() {
+        if(totalRequest < 0 || $.active == 0) {
+            totalRequest = 0;
+        }
+        if ($('.ldBar').get(0).ldBar != undefined) {
+            $('.ldBar').get(0).ldBar.set(((maxRequest - totalRequest) / maxRequest) * 100);
+        }
+    }
+
+    $(document).ready( function() {
+        setIntialBounds(heatMap.getBounds());
+    });
+
+    $(document).ajaxStop( function() {
+        totalRequest = 0;
+        adjustLoading();
+    });
 
     heatMap.on('moveend', function(e) {
-        expandBounds();
+        if (recenter) {
+            recenter = false;
+        } else {
+            expandBounds();
+            sessionStorage.setItem("zoom", heatMap.getZoom().toString())
+        }
     });
 
     function checkBounds() {
         var check = heatMap.getBounds();
         var up_lat = check.getNorthEast().lat,
-        low_lat = check.getSouthWest().lat,
-        up_long = check.getNorthEast().lng,
-        low_long = check.getSouthWest().lng;
-        return up_lat < current_up_lat -3 && low_lat > current_low_lat - 3 && up_long < current_up_long - 5 && low_long > current_low_long - 5;
+        lowLat = check.getSouthWest().lat,
+        upLong = check.getNorthEast().lng,
+        lowLong = check.getSouthWest().lng;
+        return up_lat < currentUpLat - 2 && lowLat > currentLowLat - 2 && upLong < currentUpLong - 4 && lowLong > currentLowLong - 4;
     }
 
     $('#ipv4').change(
@@ -332,5 +425,31 @@
         cfg['radius'] = $('#radius').val()
         heatmapLayer.reconfigure(cfg);
     }
+
+    function recenterMap() {
+        var centerLat = $('#latitude').val();
+        var centerLong = $('#longitude').val();
+        console.log(centerLat);
+        console.log(centerLong);
+        if (90 <= centerLat || centerLat <= -90 || 180 <= centerLong || centerLong <= -180) {
+            $('#badCoordinates').foundation('open');
+        } else {
+            recenter = true;
+            heatMap.panTo(new L.LatLng(centerLat, centerLong));
+            setIntialBounds(heatMap.getBounds());
+        }
+    }
+
+    function resetMap() {
+        sessionStorage.removeItem("zoom");
+        sessionStorage.removeItem("useExtrema");
+        location.reload(true);
+    }
+
+    function checkLoading() {
+        adjustLoading();
+        setTimeout(checkLoading, 2000);
+    }
+    checkLoading();
 
 </script>
