@@ -15,75 +15,71 @@
 <link href="{% static 'fontawesome/css/solid.css' %}" rel="stylesheet" type="text/css"/>
 
 <body>
-
     <div class="row align-middle">
         <div class="large-2 columns">
-             <fieldset class="fieldset">
-        <legend>Heat Map Controls</legend>
-        <div class="row">
-            <div class="small-6 columns">
-                <div class="switch large radius">
-                    <input class="switch-input" id="ipv4" type="checkbox" checked>
-                    <label class="switch-paddle" for="ipv4"></label>
-                    <label for="ipv4">IPV4 Locations</label>
+            <fieldset class="fieldset">
+                <legend>Heat Map Controls</legend>
+                <div class="row">
+                    <div class="small-6 columns">
+                        <div class="switch large radius">
+                            <input class="switch-input" id="ipv4" type="checkbox" checked>
+                            <label class="switch-paddle" for="ipv4"></label>
+                            <label for="ipv4">IPV4 Locations</label>
+                        </div>
+                    </div>
+                    <div class="small-6 columns">
+                        <div class="switch large radius">
+                            <input class="switch-input" id="ipv6" type="checkbox">
+                            <label class="switch-paddle" for="ipv6"></label>
+                            <label for="ipv6">IPV6 Locations</label>
+                        </div>
+                    </div>
                 </div>
-            </div>
-            <div class="small-6 columns">
-                <div class="switch large radius">
-                    <input class="switch-input" id="ipv6" type="checkbox">
-                    <label class="switch-paddle" for="ipv6"></label>
-                    <label for="ipv6">IPV6 Locations</label>
+                <div class="row">
+                    <div class="small-5 columns">
+                        <div class="switch large radius">
+                            <input class="switch-input" id="cluster" type="checkbox">
+                            <label class="switch-paddle" for="cluster"></label>
+                            <label for="cluster">By Cluster</label>
+                        </div>
+
+                    </div>
+                    <div class="small-7 columns">
+                        <button type="button" onclick="resetMap()" class="button"><i class="fas fa-redo"></i> Reset</button>
+                    </div>
                 </div>
-            </div>
-        </div>
-        <div class="row">
-            <div class="small-5 columns">
-                <div class="switch large radius">
-                    <input class="switch-input" id="cluster" type="checkbox">
-                    <label class="switch-paddle" for="cluster"></label>
-                    <label for="cluster">By Cluster</label>
+                <hr>
+                <div class="row">
+                    <div class="small-12 columns">
+                        <div class="slider" data-slider data-initial-start=".5" data-step=".01" data-end="2">
+                            <span class="slider-handle"  data-slider-handle role="slider" tabindex="1" aria-controls="radius"></span>
+                            <span class="slider-fill" data-slider-fill></span>
+                        </div>
+                    </div>
                 </div>
-
-            </div>
-            <div class="small-7 columns">
-                <button type="button" onclick="resetMap()" class="button"><i class="fas fa-redo"></i> Reset Map</button>
-            </div>
-        </div>
-        <hr>
-        <div class="row">
-            <div class="small-12 columns">
-                <div class="slider" data-slider data-initial-start=".5" data-step=".01" data-end="2">
-                    <span class="slider-handle"  data-slider-handle role="slider" tabindex="1" aria-controls="radius"></span>
-                    <span class="slider-fill" data-slider-fill></span>
+                <div class="row">
+                    <div class="small-12 columns">
+                        <input type="number" id="radius">
+                        <label for="radius">Cluster Radius</label>
+                    </div>
+                    <div class="small-7 columns small-offset-3">
+                        <button type="button" id="setRadius" onclick="changeRadius()" class="button"><i class="fas fa-arrow-circle-up"></i> Update</button>
+                    </div>
                 </div>
-            </div>
-        </div>
-
-        <div class="row">
-            <div class="small-12 columns">
-
-                    <input type="number" id="radius">
-                    <label for="radius">Cluster Radius</label>
-
-            </div>
-            <div class="small-7 columns small-offset-3">
-                <button type="button" id="setRadius" onclick="changeRadius()" class="button"><i class="fas fa-arrow-circle-up"></i> Update</button>
-            </div>
-        </div>
-        <hr>
-        <div class="row">
-            <div class="small-12 columns">
-                <h6>Center on Coordinates</h6>
-                <input type="number" id="latitude">
-                <label for="latitude">Latitude</label>
-                <input type="number" id="longitude">
-                <label for="longitude">Longitude</label>
-            </div>
-            <div class="small-7 columns small-offset-3">
-                <button type="button" id="setCenter" onclick="recenterMap()" class="button"><i class="fas fa-map-marker"></i> Set Center</button>
-            </div>
-        </div>
-        </fieldset>
+                <hr>
+                <div class="row">
+                    <div class="small-12 columns">
+                        <h6>Center on Coordinates</h6>
+                        <input type="number" id="latitude">
+                        <label for="latitude">Latitude</label>
+                        <input type="number" id="longitude">
+                        <label for="longitude">Longitude</label>
+                    </div>
+                    <div class="small-7 columns small-offset-3">
+                        <button type="button" id="setCenter" onclick="recenterMap()" class="button"><i class="fas fa-map-marker"></i> Center</button>
+                    </div>
+                </div>
+            </fieldset>
         </div>
         <div class="large-10 columns">
             <div class="row align-center">
