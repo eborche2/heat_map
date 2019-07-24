@@ -19,6 +19,7 @@ class Command(BaseCommand):
         df = pd.read_csv(file_location, usecols=[7, 8])
         count = df.groupby(df.columns.tolist(), as_index=False).size()
         ipv = None
+
         if 'IPv4' in file_name:
             ipv = 'ipv4'
         if 'IPv6' in file_name:

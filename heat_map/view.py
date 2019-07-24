@@ -1,6 +1,6 @@
-from django.views.generic import View
-from django.shortcuts import render
 from django.conf import settings
+from django.shortcuts import render
+from django.views.generic import View
 
 
 class Index(View):

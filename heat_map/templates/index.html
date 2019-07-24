@@ -120,7 +120,6 @@
         accessToken: "{{ accessToken }}"
     })
     $('#mapid').css("height", $(window).height() - 450);
-    console.log($(window).height());
 
     var cfg = {
         // radius should be small ONLY if scaleRadius is true (or small radius is intended)
@@ -161,7 +160,7 @@
         zoom: zoom,
         maxBoundsViscosity: 1.0,
         layers: [baseLayer, heatmapLayer]
-    })
+    });
 
     var ipv4 = true;
     var ipv4Max = 0;
@@ -256,7 +255,6 @@
         if (totalRequest > maxRequest) {
             maxRequest = totalRequest;
         }
-        console.log(totalRequest);
         var upperLat = bounds[0],
         lowerLat = bounds[1],
         upperLong = bounds[2],
@@ -272,14 +270,13 @@
 
             },
             success: function(response) {
-                console.log(response);
                 processResponse(response);
                 --totalRequest;
 
             },
             error: function(error) {
                 --totalRequest;
-                console.log(error.toString())
+                console.log(error.toString());
             }
         })
     }
@@ -344,9 +341,6 @@
             mapData['data'] = []
         }
         heatmapLayer.setData(mapData);
-        console.log(((maxRequest - totalRequest) / maxRequest) * 100);
-        console.log(maxRequest);
-        console.log(totalRequest);
         adjustLoading();
     }
 
@@ -429,8 +423,6 @@
     function recenterMap() {
         var centerLat = $('#latitude').val();
         var centerLong = $('#longitude').val();
-        console.log(centerLat);
-        console.log(centerLong);
         if (90 <= centerLat || centerLat <= -90 || 180 <= centerLong || centerLong <= -180) {
             $('#badCoordinates').foundation('open');
         } else {

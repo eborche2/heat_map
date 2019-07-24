@@ -20,7 +20,6 @@ from rest_framework import routers
 from heat_map.rest import IpvViewSet
 from heat_map.view import Index
 
-
 apiRouter = routers.DefaultRouter(trailing_slash=False)
 apiRouter.register(r'ipv', IpvViewSet, base_name='ipv')
 

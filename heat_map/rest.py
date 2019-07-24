@@ -3,6 +3,7 @@ from rest_framework.viewsets import ModelViewSet
 from heat_map.models import Ipv
 from heat_map.serializer import IpvSerializer
 
+
 class IpvViewSet(ModelViewSet):
     serializer_class = IpvSerializer
     entity_name = 'ipvfour'
